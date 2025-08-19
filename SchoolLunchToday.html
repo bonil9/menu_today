@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>우리학교 급식</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8f9fa;
+      --text: #212529;
+      --muted: #6c757d;
+      --card: #ffffff;
+      --border: #dee2e6;
+      --accent: #0d6efd;
+      --accent-2: #198754;
+      --danger: #dc3545;
+      --ring: rgba(13, 110, 253, 0.25);
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .container { max-width: 880px; margin: 0 auto; padding: 0 25px 24px; }
+
+    /* 헤더 및 앱바 */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: saturate(180%) blur(10px);
+      background-color: rgba(255, 255, 255, 0.85);
+      border-bottom: 1px solid var(--border);
+      padding-top: var(--safe-top);
+      padding-bottom: 8px;
+    }
+    .appbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; }
+    .brand .title { font-size: 24px; font-weight: 700; }
+    .brand .sub { font-size: 14px; color: var(--muted); }
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    /* 버튼 / 칩 */
+    .btn, .iconbtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      background-color: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      min-height: 44px;
+      transition: all 0.2s ease-in-out;
+    }
+    .btn:hover, .iconbtn:hover { box-shadow: 0 0 0 4px var(--ring); border-color: var(--accent); }
+
+    /* 날짜 네비게이션 */
+    .date-nav {
+      display: flex;
+      flex-direction: column;   /* 오늘 버튼을 날짜 아래로 내리기 위한 세로 배치 */
+      gap: 8px;
+      padding: 16px 0;
+    }
+    .date-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .today-row {
+      display: flex;
+      justify-content: center;  /* 오늘 버튼 가운데 정렬 */
+    }
+    .date-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .date-controls button {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .date-display {
+      font-size: 20px;
+      font-weight: 700;
+      flex-grow: 1;
+      text-align: center;       /* 날짜도 중앙 정렬 */
+    }
+    .today-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    /* 카드 */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      margin-top: 16px;
+    }
+    .meal-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      border-bottom: 1px solid #f1f3f5;
+      padding: 16px 0;
+    }
+    .meal-item:last-child { border-bottom: none; }
+    .meal-icon { font-size: 24px; }
+    .meal-name { font-weight: 700; font-size: 18px; margin-bottom: 4px;}
+    .menu { margin: 8px 0 0 0; padding-left: 20px; line-height: 1.8; color: #495057; }
+    .kcal { font-size: 12px; font-weight: 700; color: var(--accent-2); background-color: #e8f5e9; padding: 4px 10px; border-radius: 16px; }
+
+    /* 스켈레톤 로딩 UI */
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: sk-anim 1.5s infinite linear; }
+    @keyframes sk-anim { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .sk-card { height: 120px; border-radius: 12px; margin-bottom: 12px; }
+    .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+
+    /* 학교 검색 다이얼로그 */
+    dialog {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: min(680px, 92%);
+      padding: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    dialog::backdrop { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(2px); }
+    .dialog-header { margin: 0 0 12px 0; font-size: 20px; }
+    .dialog-list { margin-top: 16px; max-height: 360px; overflow-y: auto; border-top: 1px solid var(--border); }
+    .dialog-item { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .dialog-item:hover { background: #f8f9fa; }
+    .dialog-input { flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); min-height: 44px; }
+
+    /* 반응형 */
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 740px) { .grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container appbar">
+      <div class="brand">
+        <div class="title">우리학교 급식</div>
+        <div class="sub" id="schoolLabel">학교를 선택해주세요</div>
+      </div>
+      <button class="iconbtn" id="schoolBtn">🏫 학교 변경</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <div class="date-nav">
+        <div class="date-row">
+          <div class="date-controls">
+            <button id="prevDay" aria-label="이전 날짜">◀</button>
+          </div>
+          <div id="dateDisplay" class="date-display"></div>
+          <div class="date-controls">
+            <button id="nextDay" aria-label="다음 날짜">▶</button>
+          </div>
+        </div>
+        <div class="today-row">
+          <button id="todayBtn" class="today-btn">오늘</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="section">
+      <div id="status" class="card">
+        <div class="sk-card skeleton"></div>
+      </div>
+      <div id="meals" class="grid"></div>
+    </section>
+  </main>
+
+  <!-- 학교 검색 다이얼로그 -->
+  <dialog id="schoolDlg">
+    <form method="dialog">
+      <h3 class="dialog-header">학교 검색</h3>
+      <p style="color:var(--muted); font-size:14px; margin:0 0 16px 0;">학교명을 입력하고 검색하세요.</p>
+      <div class="row">
+        <input type="text" id="schoolQuery" placeholder="예: 도촌초등학교" class="dialog-input" />
+        <button class="btn" id="doSearch" type="button">검색</button>
+      </div>
+      <div class="dialog-list" id="schoolList"></div>
+      <div class="row" style="justify-content:flex-end; margin-top:16px;">
+        <button class="btn" value="cancel">닫기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    // ===== 설정 =====
+    const API_KEY = "9324687641804625b06c41ca66f64089"; // 실제 사용 시 본인의 NEIS API 키를 사용하세요
+    const DEFAULT_SCHOOL_NAME = "도촌초등학교";
+    const DEFAULT_ATPT = "J10"; // 경기도교육청
+
+    // ===== 유틸리티 함수 =====
+    const $ = (s) => document.querySelector(s);
+    const fmtYMD = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+    const fmtDateDisplay = (d) => `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, "0")}. ${String(d.getDate()).padStart(2, "0")}.`;
+
+    const store = {
+      get() { try { return JSON.parse(localStorage.getItem("mealAppV3") || "{}"); } catch { return {} } },
+      set(v) { localStorage.setItem("mealAppV3", JSON.stringify(v)); }
+    };
+
+    let state = {
+      date: new Date(),
+      school: null
+    };
+
+    // ===== API 호출 함수 =====
+    async function neis(path, params) {
+      const q = new URLSearchParams({ KEY: API_KEY, Type: "json", ...params }).toString();
+      const res = await fetch(`https://open.neis.go.kr/hub/${path}?${q}`);
+      if (!res.ok) throw new Error(`API 요청 실패: ${res.status}`);
+      const data = await res.json();
+      if (data.RESULT && data.RESULT.CODE !== 'INFO-000') {
+        throw new Error(`API 오류: ${data.RESULT.MESSAGE}`);
+      }
+      return data;
+    }
+
+    async function searchSchool({ name, atpt }) {
+      const params = { SCHUL_NM: name };
+      if (atpt) params.ATPT_OFCDC_SC_CODE = atpt;
+      const data = await neis("schoolInfo", params);
+      return data.schoolInfo?.[1]?.row.map(r => ({
+        atpt: r.ATPT_OFCDC_SC_CODE,
+        officeNm: r.ATPT_OFCDC_SC_NM,
+        code: r.SD_SCHUL_CODE,
+        name: r.SCHUL_NM,
+        addr: r.ORG_RDNMA
+      })) || [];
+    }
+
+    async function getMeals({ atpt, code, ymd }) {
+      const data = await neis("mealServiceDietInfo", {
+        ATPT_OFCDC_SC_CODE: atpt,
+        SD_SCHUL_CODE: code,
+        MLSV_YMD: ymd
+      });
+      return data.mealServiceDietInfo?.[1]?.row.map(r => ({
+        name: r.MMEAL_SC_NM,
+        ddish: r.DDISH_NM,
+        kcal: r.CAL_INFO
+      })) || [];
+    }
+
+    // ===== 렌더링 함수 =====
+    function renderMeals(meals) {
+      const container = $("#meals");
+      const status = $("#status");
+      container.innerHTML = "";
+      status.style.display = 'none';
+
+      if (!meals.length) {
+        status.innerHTML = `<div class="empty">🍽️<br>급식 정보가 없습니다.</div>`;
+        status.style.display = 'block';
+        return;
+      }
+
+      meals.sort((a, b) => (a.name === "중식" ? -1 : a.name === "석식" ? 1 : 0));
+
+      meals.forEach(m => {
+        const lines = (m.ddish || "")
+          .replace(/<br\s*\/?>/gi, "\n")
+          .split("\n")
+          .map(s => s.trim().replace(/\s*\([^)]*\)/g, ''))
+          .filter(Boolean);
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="meal-name">${m.name}</div>
+            ${m.kcal ? `<div class="kcal">${m.kcal}</div>` : ''}
+          </div>
+          <ul class="menu">
+            ${lines.map(l => `<li>${l}</li>`).join("")}
+          </ul>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function updateHeader() {
+      $("#dateDisplay").textContent = fmtDateDisplay(state.date);
+      $("#schoolLabel").textContent = state.school
+        ? `${state.school.name} (${state.school.officeNm})`
+        : "학교를 선택해주세요";
+    }
+
+    async function loadMeals() {
+      if (!state.school) {
+        $("#status").innerHTML = `<div class="empty">먼저 학교를 선택해주세요.</div>`;
+        $("#status").style.display = 'block';
+        $("#meals").innerHTML = "";
+        return;
+      }
+
+      $("#status").innerHTML = `<div class="sk-card skeleton"></div>`;
+      $("#status").style.display = 'block';
+      $("#meals").innerHTML = "";
+
+      try {
+        const meals = await getMeals({
+          atpt: state.school.atpt,
+          code: state.school.code,
+          ymd: fmtYMD(state.date)
+        });
+        renderMeals(meals);
+      } catch (e) {
+        $("#status").innerHTML = `<div class="empty" style="color:var(--danger)">데이터 로딩 실패<br><small>${e.message}</small></div>`;
+        $("#status").style.display = 'block';
+      }
+    }
+
+    // ===== 초기화 및 이벤트 리스너 =====
+    async function initialize() {
+      state.date = new Date();
+      const saved = store.get();
+      if (saved.school) {
+        state.school = saved.school;
+      } else {
+        // 앱 최초 실행 시 기본 학교 정보 로드 시도
+        try {
+          const results = await searchSchool({ name: DEFAULT_SCHOOL_NAME, atpt: DEFAULT_ATPT });
+          if (results.length > 0) {
+            state.school = results[0];
+            store.set({ school: state.school });
+          }
+        } catch (e) {
+          console.error("기본 학교 정보 로드 실패:", e);
+        }
+      }
+      updateHeader();
+      loadMeals();
+    }
+
+    function setupEventListeners() {
+      const changeDate = (days) => {
+        state.date.setDate(state.date.getDate() + days);
+        updateHeader();
+        loadMeals();
+      };
+
+      $("#prevDay").addEventListener("click", () => changeDate(-1));
+      $("#nextDay").addEventListener("click", () => changeDate(1));
+      $("#todayBtn").addEventListener("click", () => {
+        state.date = new Date();
+        updateHeader();
+        loadMeals();
+      });
+
+      const dlg = $("#schoolDlg");
+      $("#schoolBtn").addEventListener("click", () => dlg.showModal());
+
+      $("#doSearch").addEventListener("click", async () => {
+        const query = $("#schoolQuery").value.trim();
+        if (!query) {
+          alert("학교 이름을 입력해주세요.");
+          return;
+        }
+        const listEl = $("#schoolList");
+        listEl.innerHTML = `<div class="dialog-item">검색 중...</div>`;
+        try {
+          const rows = await searchSchool({ name: query });
+          if (!rows.length) {
+            listEl.innerHTML = `<div class="dialog-item">검색 결과가 없습니다.</div>`;
+            return;
+          }
+          listEl.innerHTML = rows.map(r => `
+            <div class="dialog-item" data-atpt="${r.atpt}" data-code="${r.code}" data-name="${r.name}" data-office="${r.officeNm}">
+              <strong>${r.name}</strong><br>
+              <small style="color:var(--muted)">${r.addr}</small>
+            </div>
+          `).join("");
+        } catch (e) {
+          listEl.innerHTML = `<div class="dialog-item" style="color:var(--danger)">검색 실패: ${e.message}</div>`;
+        }
+      });
+
+      $("#schoolList").addEventListener("click", (e) => {
+        const item = e.target.closest(".dialog-item");
+        if (!item || !item.dataset.code) return;
+        state.school = {
+          atpt: item.dataset.atpt,
+          code: item.dataset.code,
+          name: item.dataset.name,
+          officeNm: item.dataset.office
+        };
+        store.set({ school: state.school });
+        updateHeader();
+        loadMeals();
+        dlg.close();
+      });
+    }
+
+    // ===== 앱 실행 =====
+    document.addEventListener('DOMContentLoaded', () => {
+      setupEventListeners();
+      initialize();
+    });
+  </script>
+</body>
+</html>
